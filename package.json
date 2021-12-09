@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/cabralwilliams/public-thoughts#readme",
   "dependencies": {
+    "date-fns": "^2.27.0",
     "express": "^4.17.1",
     "mongoose": "^6.1.0"
   }
