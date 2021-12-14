@@ -1,6 +1,31 @@
 //Import modules
 const { User, Thought } = require('../models');
 
+async function clearThoughts(gatheredThoughts) {
+    const output = await gatheredThoughts.map(thought => {
+        let returnedThought;
+        return Thought.findById({ _id: thought._id })
+        .select('-__v')
+        .then(retrievedThought => {
+            returnedThought = retrievedThought;
+            //Now clear the thought
+            Thought.findByIdAndDelete({ _id: thought._id })
+            .then(() => {
+                //Return returnedThought
+                return returnedThought;
+            })
+            .catch(err => {
+                console.log(err);
+            });
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    });
+
+    return output;
+}
+
 const userController = {
     //Retrieve all users in the database
     getAllUsers(req, res) {
@@ -16,6 +41,7 @@ const userController = {
     //Retrieve a user and her/his thoughts and friends by user _id
     getOneUser({ params }, res) {
         User.findOne({ _id: params.userId })
+        .select('-__v')
         .populate({
             path: 'thoughts',
             select: '-__v'
@@ -50,6 +76,12 @@ const userController = {
             .then(dbUserData2 => {
                 if(dbUserData2) {
                     res.status(403).json({ 'message': `The email address ${body.email} is already in use`});
+                    return;
+                }
+                //Check to see if email is proper pattern
+                const properEmail = /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/.test(body.email);
+                if(!properEmail) {
+                    res.status(400).json({ 'message': `The email address provided, ${body.email}, is not properly formatted.`});
                     return;
                 }
                 //Create the new user if these tests both pass
@@ -103,27 +135,32 @@ const userController = {
                 return;
             }
             //Now, delete the thoughts
-            const deletedThoughts = await dbUserData.thoughts.map(thought => {
-                return Thought.findByIdAndDelete({ _id: thought.id })
-                .then(deletedThought => {
-                    return deletedThought;
+            if(dbUserData.thoughts.length > 0) {
+                clearThoughts(dbUserData.thoughts)
+                .then(deletedThoughts => {
+                    //Now, delete the user
+                    User.findByIdAndDelete({ _id: params.userId })
+                    .then(deletedUser => {
+                        const finalObject = { deletedUser, deletedThoughts };
+                        res.json(finalObject);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        res.status(400).json(err);
+                    });
+                });
+            } else {
+                //Now, delete the user
+                User.findByIdAndDelete({ _id: params.userId })
+                .then(deletedUser => {
+                    const finalObject = { deletedUser, deletedThoughts: [] };
+                    res.json(finalObject);
                 })
                 .catch(err => {
                     console.log(err);
                     res.status(400).json(err);
                 });
-            });
-
-            //Now, delete the user
-            User.findByIdAndDelete({ _id: params.userId })
-            .then(deletedUser => {
-                const finalObject = { deletedUser, deletedThoughts };
-                res.json(finalObject);
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(400).json(err);
-            });
+            }
         })
         .catch(err => {
             console.log(err);

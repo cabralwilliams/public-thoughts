@@ -31,8 +31,28 @@ const thoughtController = {
 
     //Post a new thought
     createAThought({ body }, res) {
-        Thought.create(body)
-        .then(dbThoughtData => res.json(dbThoughtData))
+        //Method assumes that the body will include a legitimate username; otherwise, a parentless Thought will exist in database
+        Thought.create({ thoughtText: body.thoughtText, username: body.username })
+        .then(dbThoughtData => {
+            //Insert the thought into the User's thoughts array
+            User.findByIdAndUpdate(
+                { _id: body.userId },
+                { $push: { thoughts: dbThoughtData._id }},
+                { new: true }
+            )
+            .then(updatedUser => {
+                if(!updatedUser) {
+                    res.status(404).json({ 'message': `There is no thought with id ${params.thoughtId}`});
+                    return;
+                }
+                //Send back the updated user and the included thought
+                res.json({ updatedUser, dbThoughtData });
+            })
+            .catch(err => {
+                console.log(err);
+                res.status(400).json(err);
+            });
+        })
         .catch(err => {
             console.log(err);
             res.status(400).json(err);
@@ -57,30 +77,59 @@ const thoughtController = {
 
     //Delete a thought
     deleteAThought({ params }, res) {
-        Thought.deleteOne({ _id: params.thoughtId })
-        .then(deletedThought => {
-            if(!deletedThought) {
-                res.status(404).json({ 'message': `There is no thought with id ${params.thoughtId}`});
-                return;
-            }
-            //Remove Thought from User's thoughts array
-            return { deletedThought, updatedUser: User.findByIdAndUpdate(
-                { _id: params.userId },
-                { $pull: { thoughts: params.thoughtId }},
-                { new: true }
-            )};
-        })
-        .then(outputObject => {
-            if(!outputObject) {
+        //Remove from User's thoughts array first
+        User.findByIdAndUpdate(
+            { _id: params.userId },
+            { $pull: { thoughts: params.thoughtId }},
+            { new: true }
+        )
+        .then(updatedUser => {
+            if(!updatedUser) {
                 res.status(404).json({ 'message': `There is no user with id ${params.userId}`});
                 return;
             }
-            res.json(outputObject)
+            //Now delete Thought
+            Thought.deleteOne({ _id: params.thoughtId })
+            .then(deletedThought => {
+                if(!deletedThought) {
+                    res.status(404).json({ 'message': `There is no thought with id ${params.thoughtId}`});
+                    return;
+                }
+                res.json({ updatedUser, deletedThought });
+            })
+            .catch(err => {
+                console.log(err);
+                res.status(400).json(err);
+            });
         })
         .catch(err => {
             console.log(err);
             res.status(400).json(err);
         });
+        // Thought.deleteOne({ _id: params.thoughtId })
+        // .then(deletedThought => {
+        //     if(!deletedThought) {
+        //         res.status(404).json({ 'message': `There is no thought with id ${params.thoughtId}`});
+        //         return;
+        //     }
+        //     //Remove Thought from User's thoughts array
+        //     return { deletedThought, updatedUser: User.findByIdAndUpdate(
+        //         { _id: params.userId },
+        //         { $pull: { thoughts: params.thoughtId }},
+        //         { new: true }
+        //     )};
+        // })
+        // .then(outputObject => {
+        //     if(!outputObject) {
+        //         res.status(404).json({ 'message': `There is no user with id ${params.userId}`});
+        //         return;
+        //     }
+        //     res.json(outputObject)
+        // })
+        // .catch(err => {
+        //     console.log(err);
+        //     res.status(400).json(err);
+        // });
     },
 
     //React to a thought

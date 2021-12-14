@@ -6,7 +6,7 @@ const ReactionSchema = new Schema(
     {
         reactionId: {
             type: Schema.Types.ObjectId,
-            default: () => Types.ObjectId
+            default: () => Types.ObjectId()
         },
         reactionBody: {
             type: String,
@@ -61,7 +61,7 @@ const ThoughtSchema = new Schema(
 );
 
 //Creates a virtual property/field that counts the number of reactions to a thought
-ThoughtSchema.virtual('reactionCount').get(() => {
+ThoughtSchema.virtual('reactionCount').get(function() {
     return this.reactions.length;
 });
 
