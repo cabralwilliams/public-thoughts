@@ -2,8 +2,13 @@
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+  ![Application File Structure](./assets/images/public_thought1.jpg)
+
   ## Description
   Social media is exploding these days.  There are seemingly countless examples of social media platforms, with at least one likely being available to satisfy just about anyone's needs.  This project is the beginnings of the backend of a social media application, storing unique user usernames and emails and allowing those users to add friends and add their own thoughts and react to the thoughts of other users.
+
+  ## Walkthrough Video
+  [Link to Video Walkthroug](https://watch.screencastify.com/v/t26b8LNz2JZaCyoDaoo7)
   
   ## Table of Contents
   

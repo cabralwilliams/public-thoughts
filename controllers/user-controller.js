@@ -79,11 +79,11 @@ const userController = {
                     return;
                 }
                 //Check to see if email is proper pattern
-                const properEmail = /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/.test(body.email);
-                if(!properEmail) {
-                    res.status(400).json({ 'message': `The email address provided, ${body.email}, is not properly formatted.`});
-                    return;
-                }
+                // const properEmail = /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/.test(body.email);
+                // if(!properEmail) {
+                //     res.status(400).json({ 'message': `The email address provided, ${body.email}, is not properly formatted.`});
+                //     return;
+                // }
                 //Create the new user if these tests both pass
                 User.create(body)
                 .then(dbUserData3 => res.json(dbUserData3))
